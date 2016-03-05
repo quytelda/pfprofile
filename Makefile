@@ -1,3 +1,5 @@
+ccflags-y := -std=gnu99 -Wno-declaration-after-statement
+
 obj-m += mp2.o
 
 all:
