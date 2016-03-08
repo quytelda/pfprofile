@@ -18,6 +18,9 @@ MODULE_DESCRIPTION("Rate Monotonic Scheduler");
 #define PROC_DIR   "mp2"
 #define PROC_ENTRY "status"
 #define DELIMITER  ","
+
+#define BUFF_SIZE 1024
+
 typedef enum {SLEEPING, RUNNING, READY} task_state_t;
 
 struct mp2_task_struct
@@ -68,6 +71,7 @@ int dispatch(const char * cmd, char * args)
 	    return parse_failure;
 
 	printk(KERN_ALERT "Registering %d (period %d)\n", pid, period);
+	register_pid(pid, period);
     }
     else if(strcmp(cmd, "Y") == 0)
     {
@@ -87,6 +91,14 @@ int dispatch(const char * cmd, char * args)
 static ssize_t mp2_read(struct file * file, char __user * buf,
 			size_t length, loff_t * offset)
 {
+    list_head * cursor;
+    struct mp2_task_struct * current_task;
+    list_for_each(cursor, &reg_list.list)
+    {
+	current_task = list_entry(cursor, struct mp2_task_struct, list);
+	printk(KERN_ALERT "%d, %d\n", current_task->pid, current_task->period);
+    }
+
     return 0;
 }
 
