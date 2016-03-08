@@ -12,17 +12,17 @@ static int do_register(char * args)
 
 	unsigned int pid;
 	unsigned int period;
-	unsigned int computation;
+	unsigned int comp_time;
 	int parse_failure = 0;
 	parse_failure |= kstrtouint(str_pid, 10, &pid);
 	parse_failure |= kstrtouint(str_per, 10, &period);
-	parse_failure |= kstrtouint(str_cmp, 10, &computation);
+	parse_failure |= kstrtouint(str_cmp, 10, &comp_time);
 
 	if(parse_failure)
 	    return parse_failure;
 
 	printk(KERN_ALERT "Registered %d (period %d).\n", pid, period);
-	register_task(pid, period);
+	register_task((pid_t) pid, period, comp_time);
 	return 0;
 }
 

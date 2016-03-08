@@ -24,16 +24,17 @@ void cleanup_tasklist(void)
     }
 }
 
-void register_task(int pid, int period)
+void register_task(pid_t pid, unsigned int period, unsigned int comp_time)
 {
     // TODO: move this to slab allocated memory
     struct mp2_task_struct * new_task = (struct mp2_task_struct *)
 	kmalloc(sizeof(struct mp2_task_struct), GFP_KERNEL);
     new_task->pid        = pid;
     new_task->period     = period;
+    new_task->comp_time  = comp_time;
     new_task->task_state = SLEEPING;
-    list_add(&new_task->list, &reg_list.list);
 
+    list_add(&new_task->list, &reg_list.list);
     num_tasks++;
 }
 
@@ -53,6 +54,8 @@ void deregister_task(int pid)
     if(current_task)
     {
 	list_del(cursor); // remove from the list
+	num_tasks--;
+
 	kfree(current_task);
     }
     else

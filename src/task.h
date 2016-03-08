@@ -12,13 +12,13 @@ struct mp2_task_struct
 
     pid_t pid;
     unsigned int period;
-    unsigned int computation;
+    unsigned int comp_time;
 };
 
 void init_tasklist(void);
 void cleanup_tasklist(void);
 
-void register_task(int pid, int period);
+void register_task(pid_t pid, unsigned int period, unsigned int comp_time);
 void deregister_task(int pid);
 
 char * tasklist_to_str(void);
