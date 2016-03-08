@@ -26,6 +26,23 @@ static int do_register(char * args)
 	return 0;
 }
 
+static int do_deregister(char * args)
+{
+    	// parse registration information
+	char * str_pid = strsep(&args, DELIMITER);
+
+	unsigned int pid;
+	int parse_failure = kstrtouint(str_pid, 10, &pid);
+
+	if(parse_failure)
+	    return parse_failure;
+
+	printk(KERN_ALERT "Deregistered %d.\n", pid);
+	deregister_task(pid);
+	return 0;
+}
+
+
 int dispatch(char * input)
 {
     // parse out the command character
@@ -39,9 +56,11 @@ int dispatch(char * input)
 	do_register(start);
 	break;
     case 'D':
+	do_deregister(start);
+	break;
     case 'Y':
     default:
-	printk(KERN_ERR "mp2: unrecognized command.\n");
+	printk(KERN_ERR "mp2: Unrecognized command.\n");
 	return 1;
     }
 

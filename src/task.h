@@ -19,5 +19,6 @@ void init_tasklist(void);
 void cleanup_tasklist(void);
 
 void register_task(int pid, int period);
+void deregister_task(int pid);
 
 char * tasklist_to_str(void);

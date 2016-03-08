@@ -37,6 +37,30 @@ void register_task(int pid, int period)
     num_tasks++;
 }
 
+void deregister_task(int pid)
+{
+    // lookup the task
+    struct list_head * cursor, * tmp;
+    struct mp2_task_struct * current_task = NULL;
+    list_for_each_safe(cursor, tmp, &reg_list.list)
+    {
+	current_task = list_entry(cursor, struct mp2_task_struct, list);
+	if(current_task->pid == pid)
+	    break;
+    }
+
+    // if we found it, get rid of it
+    if(current_task)
+    {
+	list_del(cursor); // remove from the list
+	kfree(current_task);
+    }
+    else
+    {
+	printk(KERN_ERR "mp2: Can't deregister task (pid = %d).\n", pid);
+    }
+}
+
 static char * task_to_str(struct mp2_task_struct * task)
 {
     char * desc = kmalloc(DESC_MAX_SIZE, GFP_KERNEL);
