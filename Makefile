@@ -1,6 +1,6 @@
 ccflags-y := -std=gnu99 -Wno-declaration-after-statement
 
-obj-m += mp2.o
+obj-m += mp3.o
 mp2-objs := ./src/mp2.o ./src/task.o ./src/dispatch.o
 
 all:
