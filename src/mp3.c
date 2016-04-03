@@ -17,7 +17,7 @@ MODULE_AUTHOR("Quytelda Kahja");
 MODULE_DESCRIPTION("Rate Monotonic Scheduler");
 
 #define DEBUG 1
-#define PROC_DIR   "mp2"
+#define PROC_DIR   "mp3"
 #define PROC_ENTRY "status"
 
 static ssize_t mp2_read(struct file * file, char __user * buf,
@@ -28,8 +28,9 @@ static ssize_t mp2_read(struct file * file, char __user * buf,
     if(*offset > 0) return 0;
 
     char * tasklist_str = tasklist_to_str();
-    int len = strlen(tasklist_str);
+    if(!tasklist_str) return 0;
 
+    int len = strlen(tasklist_str);
     if(!copy_to_user(buf, tasklist_str, len))
     {
 	*offset += len;
@@ -37,7 +38,7 @@ static ssize_t mp2_read(struct file * file, char __user * buf,
     }
     else
     {
-	printk(KERN_ERR "mp2: could not copy /proc read data to userspace.\n");
+	printk(KERN_ERR "mp3: could not copy /proc read data to userspace.\n");
 	return 0;
     }
 
@@ -55,7 +56,7 @@ static ssize_t mp2_write(struct file * file, const char * buf,
 
 	int error = dispatch(input);
 	if(error)
-	    printk(KERN_ERR "mp3: Dispatch failed (error %d).)\n", error, input);
+	    printk(KERN_ERR "mp3: Dispatch failed (error %d).)\n", error);
     }
     else
     {
@@ -78,7 +79,7 @@ static const struct file_operations proc_fops =
 int __init mp2_init(void)
 {
 #ifdef DEBUG
-    printk(KERN_INFO "Loading MP2 module...\n");
+    printk(KERN_INFO "Loading MP3 module...\n");
 #endif
     // initialize the registration list
     init_tasklist();
@@ -93,7 +94,7 @@ int __init mp2_init(void)
 void __exit mp2_exit(void)
 {
 #ifdef DEBUG
-    printk(KERN_INFO "Cleaning up MP2 module...\n");
+    printk(KERN_INFO "Cleaning up MP3 module...\n");
 #endif
     // clean up proc filesystem entry
     remove_proc_entry(PROC_ENTRY, proc_dir);
