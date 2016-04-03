@@ -1,4 +1,4 @@
-/* mp2.c - MP2 Kernel Module
+/* mp3.c - MP2 Kernel Module
  * Copyright (C) 2016 Quytelda Kahja <quytelda@tamalin.org>
  */
 
@@ -8,6 +8,7 @@
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
+#include <linux/mm.h>
 #include "mp3_given.h"
 #include "task.h"
 #include "dispatch.h"
@@ -19,6 +20,7 @@ MODULE_DESCRIPTION("Rate Monotonic Scheduler");
 #define DEBUG 1
 #define PROC_DIR   "mp3"
 #define PROC_ENTRY "status"
+#define NUM_PAGES 128
 
 static ssize_t mp2_read(struct file * file, char __user * buf,
 			size_t length, loff_t * offset)
@@ -67,6 +69,7 @@ static ssize_t mp2_write(struct file * file, const char * buf,
     return length;
 }
 
+static void * buffer;
 static struct proc_dir_entry * proc_dir;
 static struct proc_dir_entry * proc_entry;
 static const struct file_operations proc_fops =
@@ -84,6 +87,16 @@ int __init mp2_init(void)
     // initialize the registration list
     init_tasklist();
 
+    // setup shared user-space memory buffer
+    buffer = vmalloc(NUM_PAGES * PAGE_SIZE);
+
+    void * addr;
+    for(int i = 0; i < NUM_PAGES; i++)
+    {
+	addr = buffer + (i * PAGE_SIZE);
+	set_bit(PG_reserved, &vmalloc_to_page(addr)->flags);
+    }
+
     // set up proc filesystem entries
     proc_dir = proc_mkdir(PROC_DIR, NULL);
     proc_entry = proc_create(PROC_ENTRY, 0666, proc_dir, &proc_fops);
@@ -99,6 +112,16 @@ void __exit mp2_exit(void)
     // clean up proc filesystem entry
     remove_proc_entry(PROC_ENTRY, proc_dir);
     remove_proc_entry(PROC_DIR, NULL);
+
+    // clean up shared user-space memory buffer
+    void * addr;
+    for(int i = 0; i < NUM_PAGES; i++)
+    {
+	addr = buffer + (i * PAGE_SIZE);
+	clear_bit(PG_reserved, &vmalloc_to_page(addr)->flags);
+    }
+
+    vfree(buffer);
 
     // deallocate task registration
     cleanup_tasklist();
