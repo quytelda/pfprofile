@@ -3,64 +3,48 @@
 #include "dispatch.h"
 #include "task.h"
 
-static int do_register(char * args)
+static void do_register(pid_t pid)
 {
-    	// parse registration information
-	char * str_pid = strsep(&args, DELIMITER);
-	char * str_per = strsep(&args, DELIMITER);
-	char * str_cmp = strsep(&args, DELIMITER);
-
-	unsigned int pid;
-	unsigned int period;
-	unsigned int comp_time;
-	int parse_failure = 0;
-	parse_failure |= kstrtouint(str_pid, 10, &pid);
-	parse_failure |= kstrtouint(str_per, 10, &period);
-	parse_failure |= kstrtouint(str_cmp, 10, &comp_time);
-
-	if(parse_failure)
-	    return parse_failure;
-
-	printk(KERN_ALERT "Registered %d (period %d).\n", pid, period);
-	register_task((pid_t) pid, period, comp_time);
-	return 0;
+    printk(KERN_ALERT "Registered %d.\n", pid);
+    register_task(pid);
 }
 
-static int do_deregister(char * args)
+static void do_unregister(pid_t pid)
 {
-    	// parse registration information
-	char * str_pid = strsep(&args, DELIMITER);
-
-	unsigned int pid;
-	int parse_failure = kstrtouint(str_pid, 10, &pid);
-
-	if(parse_failure)
-	    return parse_failure;
-
-	printk(KERN_ALERT "Deregistered %d.\n", pid);
-	deregister_task(pid);
-	return 0;
+    printk(KERN_ALERT "Deregistered %d.\n", pid);
+    deregister_task(pid);
 }
-
 
 int dispatch(char * input)
 {
     // parse out the command character
-    char * start = input;
-    char * command = strsep(&start, DELIMITER);
+    char * ptr = input;
+    char * command = strsep(&ptr, DELIMITER);
     if(strlen(command) < 1) return 1;
 
+    // parse out the PID
+    if(!ptr) return 1;
+
+    pid_t pid;
+    int parse_failure = kstrtouint(ptr, 10, &pid);
+    if(parse_failure)
+    {
+	printk(KERN_ERR "mp3: Unable to parse pid: '%s'.", ptr);
+	return parse_failure;
+    }
+
+    // actual dispatch
     switch(command[0])
     {
     case 'R':
-	do_register(start);
+        do_register(pid);
 	break;
-    case 'D':
-	do_deregister(start);
+    case 'U':
+	do_unregister(pid);
 	break;
     case 'Y':
     default:
-	printk(KERN_ERR "mp2: Unrecognized command.\n");
+	printk(KERN_ERR "mp3: Unrecognized command.\n");
 	return 1;
     }
 

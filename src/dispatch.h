@@ -1,3 +1,3 @@
-#define DELIMITER  ","
+#define DELIMITER  " "
 
 int dispatch(char * input);

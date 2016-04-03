@@ -24,21 +24,27 @@ void cleanup_tasklist(void)
     }
 }
 
-void register_task(pid_t pid, unsigned int period, unsigned int comp_time)
+/**
+ * Allocates and fills new task mp2_task_struct for this PID
+ * and adds it to the registered task list.
+ * TODO: Duplicate registrations will be ignored.
+ */
+void register_task(pid_t pid)
 {
     // TODO: move this to slab allocated memory
     struct mp2_task_struct * new_task = (struct mp2_task_struct *)
 	kmalloc(sizeof(struct mp2_task_struct), GFP_KERNEL);
-    new_task->pid        = pid;
-    new_task->period     = period;
-    new_task->comp_time  = comp_time;
-    new_task->task_state = SLEEPING;
+    new_task->pid = pid;
 
     list_add(&new_task->list, &reg_list.list);
     num_tasks++;
 }
 
-void deregister_task(int pid)
+/**
+ * Removes and deallocates the task with pid @pid from the registered task list.
+ * Requests with non-existant PIDs will be complained about.
+ */
+void deregister_task(pid_t pid)
 {
     // lookup the task
     struct list_head * cursor, * tmp;
@@ -48,6 +54,8 @@ void deregister_task(int pid)
 	current_task = list_entry(cursor, struct mp2_task_struct, list);
 	if(current_task->pid == pid)
 	    break;
+
+	current_task = NULL;
     }
 
     // if we found it, get rid of it
@@ -60,14 +68,14 @@ void deregister_task(int pid)
     }
     else
     {
-	printk(KERN_ERR "mp2: Can't deregister task (pid = %d).\n", pid);
+	printk(KERN_ERR "mp3: Can't deregister task (pid = %d).\n", pid);
     }
 }
 
 static char * task_to_str(struct mp2_task_struct * task)
 {
     char * desc = kmalloc(DESC_MAX_SIZE, GFP_KERNEL);
-    snprintf(desc, DESC_MAX_SIZE, "%d, %d\n", task->pid, task->period);
+    snprintf(desc, DESC_MAX_SIZE, "%d\n", task->pid);
 
     return desc;
 }

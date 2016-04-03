@@ -7,7 +7,8 @@
 #include <linux/proc_fs.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
-#include "mp2_given.h"
+#include <linux/sched.h>
+#include "mp3_given.h"
 #include "task.h"
 #include "dispatch.h"
 
@@ -54,11 +55,11 @@ static ssize_t mp2_write(struct file * file, const char * buf,
 
 	int error = dispatch(input);
 	if(error)
-	    printk(KERN_ERR "mp2: dispatch failed (error %d) for input '%s')\n", error, input);
+	    printk(KERN_ERR "mp3: Dispatch failed (error %d).)\n", error, input);
     }
     else
     {
-	printk(KERN_ERR "mp2: could not copy /proc write data from userspace.\n");
+	printk(KERN_ERR "mp3: Could not copy /proc write data from userspace.\n");
     }
 
     kfree(input);
