@@ -13,7 +13,7 @@ struct mp2_task_struct
 void init_tasklist(void);
 void cleanup_tasklist(void);
 
-void register_task(pid_t pid);
-void deregister_task(int pid);
+int register_task(pid_t pid);
+int deregister_task(pid_t pid);
 
 char * tasklist_to_str(void);

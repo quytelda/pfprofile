@@ -3,16 +3,37 @@
 #include "dispatch.h"
 #include "task.h"
 
+static struct workqueue_struct * workqueue = NULL;
+
+void setup_workqueue()
+{
+    workqueue = create_workqueue("mp3");
+}
+
+void cleanup_workqueue()
+{
+    if(workqueue)
+	destroy_workqueue(workqueue);
+}
+
 static void do_register(pid_t pid)
 {
-    printk(KERN_ALERT "Registered %d.\n", pid);
-    register_task(pid);
+    int num_tasks = register_task(pid);
+    printk(KERN_ALERT "Registered %d (%d).\n", pid, num_tasks);
+
+    // upon registering the first task, setup a work queue
+    if(num_tasks == 1)
+	setup_workqueue();
 }
 
 static void do_unregister(pid_t pid)
 {
-    printk(KERN_ALERT "Deregistered %d.\n", pid);
-    deregister_task(pid);
+    int num_tasks = deregister_task(pid);
+    printk(KERN_ALERT "Deregistered %d (%d).\n", pid, num_tasks);
+
+    // upon removing the last tasks, clean up the work queue
+    if(num_tasks == 0)
+	cleanup_workqueue();
 }
 
 int dispatch(char * input)

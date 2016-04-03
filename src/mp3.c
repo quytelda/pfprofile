@@ -102,6 +102,7 @@ void __exit mp2_exit(void)
 
     // deallocate task registration
     cleanup_tasklist();
+    cleanup_workqueue();
 }
 
 module_init(mp2_init);
