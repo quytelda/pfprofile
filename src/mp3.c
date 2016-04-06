@@ -84,6 +84,21 @@ static int device_release(struct inode * node, struct file * file)
 
 static int device_mmap(struct file * file, struct vm_area_struct * vma)
 {
+    long vm_size = vma->vm_end - vma->vm_start;
+
+    int res;
+    void * addr = buffer;
+    unsigned long pfn, start;
+    for(int i = 0; (i < NUM_PAGES) && (addr - buffer < vm_size); i++)
+    {
+	addr = buffer + (i * PAGE_SIZE);
+	pfn = vmalloc_to_pfn(addr);
+
+	start = vma->vm_start + (i * PAGE_SIZE);
+	if((res = remap_pfn_range(vma, start, pfn, PAGE_SIZE, PAGE_SHARED)) > 0)
+	    return res;
+    }
+
     return 0;
 }
 
