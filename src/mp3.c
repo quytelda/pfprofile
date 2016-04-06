@@ -1,4 +1,5 @@
-/* mp3.c - MP2 Kernel Module
+/**
+ * mp3.c - MP3 Kernel Module
  * Copyright (C) 2016 Quytelda Kahja <quytelda@tamalin.org>
  */
 
@@ -21,6 +22,8 @@ MODULE_DESCRIPTION("Rate Monotonic Scheduler");
 #define PROC_ENTRY "status"
 #define DEV_NAME   "node"
 #define NUM_PAGES 128
+
+static void * buffer;
 
 static ssize_t mp2_read(struct file * file, char __user * buf,
 			size_t length, loff_t * offset)
@@ -79,7 +82,7 @@ static int device_release(struct inode * node, struct file * file)
     return 0; // do nothing
 }
 
-static int device_mmap(struct file * file, struct vm_area_struct * area)
+static int device_mmap(struct file * file, struct vm_area_struct * vma)
 {
     return 0;
 }
@@ -93,7 +96,6 @@ static const struct file_operations proc_fops =
     .write = mp2_write,
 };
 
-static void * buffer;
 static dev_t dev_num;
 static struct cdev * dev;
 static const struct file_operations dev_fops =
@@ -125,19 +127,19 @@ int __init mp2_init(void)
     // setup character device
     int err;
 
-    err = alloc_chrdev_region(&dev_num, 0, 0, DEV_NAME);
+    err = alloc_chrdev_region(&dev_num, 0, 1, DEV_NAME);
     dev = cdev_alloc();
     if(err || !dev)
     {
-	printk(KERN_ERR "mp3: Unable to allocate character device.");
+	printk(KERN_ERR "mp3: Unable to allocate character device.\n");
 	return 0;
     }
     
     cdev_init(dev, &dev_fops);
-    err = cdev_add(dev, dev_num, 0);
+    err = cdev_add(dev, dev_num, 1);
     if(err)
     {
-	printk(KERN_ERR "mp3: Unable to register character device.");
+	printk(KERN_ERR "mp3: Unable to register character device.\n");
 	return 0;
     }
 
@@ -159,7 +161,7 @@ void __exit mp2_exit(void)
 
     // clean up character device
     cdev_del(dev);
-    unregister_chrdev_region(dev_num, 0);
+    unregister_chrdev_region(dev_num, 1);
 
     // clean up shared user-space memory buffer
     void * addr;
