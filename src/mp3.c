@@ -72,30 +72,24 @@ static ssize_t mp2_write(struct file * file, const char * buf,
     return length;
 }
 
-static int device_open(struct inode * node, struct file * file)
-{
-    return 0; // do nothing
-}
-
-static int device_release(struct inode * node, struct file * file)
-{
-    return 0; // do nothing
-}
-
 static int device_mmap(struct file * file, struct vm_area_struct * vma)
 {
-    long vm_size = vma->vm_end - vma->vm_start;
+    long vm_start = vma->vm_start;
+    long vm_size = vma->vm_end - vm_start;
 
     int res;
-    void * addr = buffer;
-    unsigned long pfn, start;
-    for(int i = 0; (i < NUM_PAGES) && (addr - buffer < vm_size); i++)
+    long offset = 0;
+    void * ph_addr = buffer;
+    unsigned long pfn, vm_addr;
+    for(int i = 0; (i < NUM_PAGES) && (offset < vm_size); i++)
     {
-	addr = buffer + (i * PAGE_SIZE);
-	pfn = vmalloc_to_pfn(addr);
+	offset = i * PAGE_SIZE;
 
-	start = vma->vm_start + (i * PAGE_SIZE);
-	if((res = remap_pfn_range(vma, start, pfn, PAGE_SIZE, PAGE_SHARED)) > 0)
+	ph_addr = buffer + offset;
+	pfn = vmalloc_to_pfn(ph_addr);
+
+	vm_addr = vm_start + offset;
+	if((res = remap_pfn_range(vma, vm_addr, pfn, PAGE_SIZE, PAGE_SHARED)) > 0)
 	    return res;
     }
 
@@ -116,8 +110,6 @@ static struct cdev * dev;
 static const struct file_operations dev_fops =
 {
     .owner   = THIS_MODULE,
-    .open    = device_open,
-    .release = device_release,
     .mmap    = device_mmap,
 };
 
