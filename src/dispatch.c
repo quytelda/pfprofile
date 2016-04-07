@@ -3,17 +3,38 @@
 #include "dispatch.h"
 #include "task.h"
 
-static struct workqueue_struct * workqueue = NULL;
+#define SAMPLE_DELAY 50
+
+struct workqueue_struct * workqueue = NULL;
+DECLARE_DELAYED_WORK(dtask, sample_tasks);
 
 void setup_workqueue()
 {
     workqueue = create_workqueue("mp3");
+
+    if(!workqueue)
+    {
+	printk(KERN_ERR "Unable to initialize workqueue.\n");
+	return;
+    }
+
+    if(!queue_delayed_work(workqueue, &dtask, msecs_to_jiffies(SAMPLE_DELAY)))
+    {
+	printk(KERN_ERR "Failed to enqueue sampling task.\n");
+	return;
+    }
 }
 
 void cleanup_workqueue()
 {
     if(workqueue)
+    {
+	cancel_delayed_work(&dtask);
+	flush_workqueue(workqueue);
 	destroy_workqueue(workqueue);
+
+	workqueue = NULL;
+    }
 }
 
 static void do_register(pid_t pid)

@@ -10,6 +10,8 @@ struct mp2_task_struct
     pid_t pid;
 };
 
+void sample_tasks(struct work_struct * work);
+
 void init_tasklist(void);
 void cleanup_tasklist(void);
 

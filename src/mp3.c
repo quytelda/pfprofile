@@ -12,6 +12,7 @@
 #include <linux/cdev.h>
 #include "task.h"
 #include "dispatch.h"
+#include "mem.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Quytelda Kahja");
@@ -21,9 +22,8 @@ MODULE_DESCRIPTION("Rate Monotonic Scheduler");
 #define PROC_DIR   "mp3"
 #define PROC_ENTRY "status"
 #define DEV_NAME   "node"
-#define NUM_PAGES 128
 
-static void * buffer;
+void * buffer;
 
 static ssize_t mp2_read(struct file * file, char __user * buf,
 			size_t length, loff_t * offset)

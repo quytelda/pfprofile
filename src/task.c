@@ -1,10 +1,61 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>
+#include <linux/sched.h>
 #include "task.h"
+#include "mem.h"
+#include "mp3_given.h"
 
 static struct mp2_task_struct reg_list;
 static int num_tasks = 0;
+
+extern void * buffer;
+unsigned long * ptr = NULL;
+extern struct workqueue_struct * workqueue;
+extern struct delayed_work dtask;
+void sample_tasks(struct work_struct * work)
+{
+    unsigned long major = 0, minor = 0;
+    unsigned long cpu_util = 0;
+
+    struct list_head * cursor;
+    struct mp2_task_struct * current_task;
+    list_for_each(cursor, &reg_list.list)
+    {
+	current_task = list_entry(cursor, struct mp2_task_struct, list);
+
+	int pid = (int) current_task->pid;
+	unsigned long min_flt, maj_flt;
+	unsigned long utime, stime;
+	if(get_cpu_use(pid, &min_flt, &maj_flt, &utime, &stime))
+	{
+	    printk(KERN_ERR "Unable to sample process (pid = %d).\n", pid);
+	    continue;
+	}
+
+	major += maj_flt;
+	minor += min_flt;
+	cpu_util += ((utime + stime) * 1000) / jiffies;
+    }
+
+    // put in shared memory
+    if(!ptr)
+	ptr = (unsigned long *) buffer;
+
+    ptr[0] = jiffies;
+    ptr[1] = minor;
+    ptr[2] = major;
+    ptr[3] = cpu_util;
+
+    ptr += 4 * sizeof(unsigned long);
+    if((void *) ptr >= buffer + NUM_PAGES * PAGE_SIZE)
+	ptr = buffer;
+
+    if(!queue_delayed_work(workqueue, &dtask, msecs_to_jiffies(50)))
+    {
+	printk(KERN_ERR "Failed to enqueue sampling task.\n");
+    }
+}
 
 void init_tasklist(void)
 {
@@ -93,7 +144,7 @@ static char * task_to_str(struct mp2_task_struct * task)
  */
 char * tasklist_to_str(void)
 {
-    if(num_tasks >= 0) return NULL;
+    if(num_tasks <= 0) return NULL;
 
     char * buffer = kmalloc(num_tasks * DESC_MAX_SIZE, GFP_KERNEL);
     memset(buffer, 0, num_tasks * DESC_MAX_SIZE);
